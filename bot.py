@@ -159,24 +159,20 @@ async def admin_cb(update: Update, context: ContextTypes.DEFAULT_TYPE):
             f"🔧 <b>ADMIN PANEL</b>\n\n👥 Foydalanuvchilar: <b>{s['users']}</b>\n"
             f"🎬 Kinolar: <b>{s['movies']}</b>\n📢 Kanallar: <b>{s['channels']}</b>",
             parse_mode="HTML", reply_markup=admin_main_kb())
-
     elif d == "menu_channels":
         chs = db.get_channels()
         await q.edit_message_text(f"📢 <b>KANALLAR</b>\n\nJami: <b>{len(chs)} ta</b>",
             parse_mode="HTML", reply_markup=channels_kb())
-
     elif d == "ch_list":
         chs = db.get_channels()
         txt = "📢 <b>Kanallar:</b>\n\n" + "\n".join(f"{i+1}. {c['username']}" for i,c in enumerate(chs)) if chs else "📢 Kanallar yo'q."
         await q.edit_message_text(txt, parse_mode="HTML", reply_markup=channels_kb())
-
     elif d == "ch_add":
         context.user_data["state"] = "waiting_channel"
         await q.edit_message_text(
             "📢 <b>Kanal username yuboring:</b>\n\nMisol: <code>@kino_uzbek</code>\n\n"
             "⚠️ Botni kanalga admin qilib qo'shing!",
             parse_mode="HTML", reply_markup=back_kb("menu_channels"))
-
     elif d == "ch_remove":
         chs = db.get_channels()
         if not chs:
@@ -186,31 +182,23 @@ async def admin_cb(update: Update, context: ContextTypes.DEFAULT_TYPE):
         btns.append([InlineKeyboardButton("🔙 Orqaga", callback_data="menu_channels")])
         await q.edit_message_text("🗑 <b>O'chirish uchun tanlang:</b>",
             parse_mode="HTML", reply_markup=InlineKeyboardMarkup(btns))
-
     elif d.startswith("del_ch_"):
         username = d[7:]
         db.remove_channel(username)
         await q.edit_message_text(f"✅ <b>{username}</b> o'chirildi!", parse_mode="HTML", reply_markup=channels_kb())
-
     elif d == "menu_movies":
         mvs = db.get_all_movies()
         await q.edit_message_text(f"🎬 <b>KINOLAR</b>\n\nJami: <b>{len(mvs)} ta</b>",
             parse_mode="HTML", reply_markup=movies_kb())
-
     elif d == "mv_list":
         mvs = db.get_all_movies()
-        if not mvs:
-            txt = "🎬 Kinolar yo'q."
-        else:
-            txt = "🎬 <b>Kinolar:</b>\n\n" + "\n".join(f"{i+1}. <code>{m['code']}</code> — {m['name']}" for i,m in enumerate(mvs))
+        txt = "🎬 <b>Kinolar:</b>\n\n" + "\n".join(f"{i+1}. <code>{m['code']}</code> — {m['name']}" for i,m in enumerate(mvs)) if mvs else "🎬 Kinolar yo'q."
         await q.edit_message_text(txt, parse_mode="HTML", reply_markup=movies_kb())
-
     elif d == "mv_add":
         context.user_data["state"] = "waiting_video"
         await q.edit_message_text(
             "🎬 <b>Kino qo'shish</b>\n\n📤 Video faylni yuboring:",
             parse_mode="HTML", reply_markup=back_kb("menu_movies"))
-
     elif d == "mv_remove":
         mvs = db.get_all_movies()
         if not mvs:
@@ -220,19 +208,16 @@ async def admin_cb(update: Update, context: ContextTypes.DEFAULT_TYPE):
         btns.append([InlineKeyboardButton("🔙 Orqaga", callback_data="menu_movies")])
         await q.edit_message_text("🗑 <b>O'chirish uchun tanlang:</b>",
             parse_mode="HTML", reply_markup=InlineKeyboardMarkup(btns))
-
     elif d.startswith("del_mv_"):
         code = d[7:]
         db.remove_movie(code)
         await q.edit_message_text(f"✅ <b>{code}</b> o'chirildi!", parse_mode="HTML", reply_markup=movies_kb())
-
     elif d == "menu_stats":
         await q.edit_message_text(
             f"📊 <b>STATISTIKA</b>\n\n👥 Foydalanuvchilar: <b>{s['users']}</b>\n"
             f"🎬 Kinolar: <b>{s['movies']}</b>\n📢 Kanallar: <b>{s['channels']}</b>",
             parse_mode="HTML",
             reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("🔙 Orqaga", callback_data="back_main")]]))
-
     elif d == "menu_broadcast":
         context.user_data["state"] = "waiting_broadcast"
         await q.edit_message_text("📣 <b>Xabar matnini yuboring:</b>",
