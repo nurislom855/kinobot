@@ -1,0 +1,43 @@
+name: KinoBot
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+  schedule:
+    - cron: '0 */6 * * *'
+
+jobs:
+  run-bot:
+    runs-on: ubuntu-latest
+    timeout-minutes: 350
+
+    steps:
+      - name: Kodni yuklab olish
+        uses: actions/checkout@v4
+
+      - name: Python o'rnatish
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Kutubxonalarni o'rnatish
+        run: pip install -r requirements.txt
+
+      - name: data.json ni tiklash
+        env:
+          DATA_JSON: ${{ secrets.DATA_JSON }}
+        run: |
+          if [ -n "$DATA_JSON" ]; then
+            echo "$DATA_JSON" > data.json
+            echo "data.json tiklandi"
+          else
+            echo '{"channels":[],"movies":{},"users":[]}' > data.json
+            echo "Yangi data.json yaratildi"
+          fi
+
+      - name: Botni ishga tushirish
+        env:
+          BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
+          ADMIN_IDS: ${{ secrets.ADMIN_IDS }}
+        run: python bot.py
