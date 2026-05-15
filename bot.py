@@ -1,6 +1,4 @@
 import logging
-import threading
-from http.server import HTTPServer, BaseHTTPRequestHandler
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import (
     Application, CommandHandler, MessageHandler,
@@ -12,28 +10,6 @@ from database import db
 logging.basicConfig(format='%(asctime)s - %(levelname)s - %(message)s', level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-
-# ═══════════════════════════════════════
-#  KEEP-ALIVE (Render uchun)
-# ═══════════════════════════════════════
-
-class KeepAlive(BaseHTTPRequestHandler):
-    def do_GET(self):
-        self.send_response(200)
-        self.end_headers()
-        self.wfile.write(b"Bot ishlayapti!")
-    def log_message(self, format, *args):
-        pass
-
-def keep_alive():
-    server = HTTPServer(("0.0.0.0", 8080), KeepAlive)
-    t = threading.Thread(target=server.serve_forever, daemon=True)
-    t.start()
-
-
-# ═══════════════════════════════════════
-#  YORDAMCHI
-# ═══════════════════════════════════════
 
 def is_admin(user_id):
     return user_id in ADMIN_IDS
@@ -82,10 +58,6 @@ def back_kb(to):
     return InlineKeyboardMarkup([[InlineKeyboardButton("🔙 Orqaga", callback_data=to)]])
 
 
-# ═══════════════════════════════════════
-#  FOYDALANUVCHI
-# ═══════════════════════════════════════
-
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
     db.add_user(user_id)
@@ -131,10 +103,6 @@ async def user_msg(update: Update, context: ContextTypes.DEFAULT_TYPE):
     else:
         await update.message.reply_text(f"❌ <b>{text}</b> kodi topilmadi.", parse_mode="HTML")
 
-
-# ═══════════════════════════════════════
-#  ADMIN
-# ═══════════════════════════════════════
 
 async def admin_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not is_admin(update.effective_user.id):
@@ -302,12 +270,7 @@ async def handle_video(update: Update, context: ContextTypes.DEFAULT_TYPE):
         parse_mode="HTML")
 
 
-# ═══════════════════════════════════════
-#  MAIN
-# ═══════════════════════════════════════
-
 def main():
-    keep_alive()
     app = Application.builder().token(TOKEN).build()
     app.add_handler(CommandHandler("start", start))
     app.add_handler(CommandHandler("admin", admin_cmd))
