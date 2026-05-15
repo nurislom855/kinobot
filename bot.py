@@ -1,5 +1,6 @@
 import logging
 import threading
+import asyncio
 from http.server import HTTPServer, BaseHTTPRequestHandler
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import (
@@ -30,8 +31,7 @@ def run_server():
     server.serve_forever()
 
 def keep_alive():
-    t = threading.Thread(target=run_server)
-    t.daemon = True
+    t = threading.Thread(target=run_server, daemon=True)
     t.start()
 
 
@@ -201,14 +201,12 @@ async def admin_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
             f"📢 Kanallar: <b>{s['channels']}</b>",
             parse_mode="HTML", reply_markup=admin_main_keyboard()
         )
-
     elif data == "menu_channels":
         channels = db.get_channels()
         await query.edit_message_text(
             f"📢 <b>KANALLAR BOSHQARUVI</b>\n\nJami: <b>{len(channels)} ta kanal</b>",
             parse_mode="HTML", reply_markup=channels_keyboard()
         )
-
     elif data == "ch_list":
         channels = db.get_channels()
         if not channels:
@@ -218,7 +216,6 @@ async def admin_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
             for i, ch in enumerate(channels, 1):
                 text += f"{i}. {ch['username']} — {ch['name']}\n"
         await query.edit_message_text(text, parse_mode="HTML", reply_markup=channels_keyboard())
-
     elif data == "ch_add":
         context.user_data["state"] = "waiting_channel"
         await query.edit_message_text(
@@ -228,7 +225,6 @@ async def admin_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
             "⚠️ Avval botni kanalga <b>admin</b> qilib qo'shing!",
             parse_mode="HTML", reply_markup=back_keyboard("menu_channels")
         )
-
     elif data == "ch_remove":
         channels = db.get_channels()
         if not channels:
@@ -237,21 +233,18 @@ async def admin_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
         btns = [[InlineKeyboardButton(f"🗑 {ch['username']}", callback_data=f"del_ch_{ch['username']}")] for ch in channels]
         btns.append([InlineKeyboardButton("🔙 Orqaga", callback_data="menu_channels")])
         await query.edit_message_text("🗑 <b>O'chirish uchun kanalni tanlang:</b>", parse_mode="HTML", reply_markup=InlineKeyboardMarkup(btns))
-
     elif data.startswith("del_ch_"):
         username = data[7:]
         if db.remove_channel(username):
             await query.edit_message_text(f"✅ <b>{username}</b> o'chirildi!", parse_mode="HTML", reply_markup=channels_keyboard())
         else:
             await query.edit_message_text("❌ Xatolik.", reply_markup=channels_keyboard())
-
     elif data == "menu_movies":
         movies = db.get_all_movies()
         await query.edit_message_text(
             f"🎬 <b>KINOLAR BOSHQARUVI</b>\n\nJami: <b>{len(movies)} ta kino</b>",
             parse_mode="HTML", reply_markup=movies_keyboard()
         )
-
     elif data == "mv_list":
         movies = db.get_all_movies()
         if not movies:
@@ -261,7 +254,6 @@ async def admin_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
             for i, m in enumerate(movies, 1):
                 text += f"{i}. <code>{m['code']}</code> — <b>{m['name']}</b>\n"
         await query.edit_message_text(text, parse_mode="HTML", reply_markup=movies_keyboard())
-
     elif data == "mv_add":
         context.user_data["state"] = "waiting_video"
         await query.edit_message_text(
@@ -271,7 +263,6 @@ async def admin_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
             "📤 Hozir videoni yuboring:",
             parse_mode="HTML", reply_markup=back_keyboard("menu_movies")
         )
-
     elif data == "mv_remove":
         movies = db.get_all_movies()
         if not movies:
@@ -280,14 +271,12 @@ async def admin_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
         btns = [[InlineKeyboardButton(f"🗑 {m['code']} — {m['name']}", callback_data=f"del_mv_{m['code']}")] for m in movies]
         btns.append([InlineKeyboardButton("🔙 Orqaga", callback_data="menu_movies")])
         await query.edit_message_text("🗑 <b>O'chirish uchun kinoni tanlang:</b>", parse_mode="HTML", reply_markup=InlineKeyboardMarkup(btns))
-
     elif data.startswith("del_mv_"):
         code = data[7:]
         if db.remove_movie(code):
             await query.edit_message_text(f"✅ <b>{code}</b> kodli kino o'chirildi!", parse_mode="HTML", reply_markup=movies_keyboard())
         else:
             await query.edit_message_text("❌ Xatolik.", reply_markup=movies_keyboard())
-
     elif data == "menu_stats":
         s = db.get_stats()
         await query.edit_message_text(
@@ -296,9 +285,7 @@ async def admin_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
             f"🎬 Kinolar: <b>{s['movies']}</b>\n"
             f"📢 Kanallar: <b>{s['channels']}</b>",
             parse_mode="HTML",
-            reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("🔙 Orqaga", callback_data="back_main")]])
-        )
-
+            reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("🔙 Orqaga", callback_data="back_main")]]))
     elif data == "menu_broadcast":
         context.user_data["state"] = "waiting_broadcast"
         await query.edit_message_text(
@@ -307,18 +294,12 @@ async def admin_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
 
 
-# ═══════════════════════════════════════
-#  ADMIN MATN/VIDEO XABARLAR
-# ═══════════════════════════════════════
-
 async def handle_admin_input(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
     if not is_admin(user_id):
         await handle_user_message(update, context)
         return
-
     state = context.user_data.get("state")
-
     if state == "waiting_channel":
         username = update.message.text.strip()
         if not username.startswith("@"):
@@ -339,13 +320,11 @@ async def handle_admin_input(update: Update, context: ContextTypes.DEFAULT_TYPE)
                 reply_markup=InlineKeyboardMarkup([
                     [InlineKeyboardButton("➕ Yana qo'shish", callback_data="ch_add")],
                     [InlineKeyboardButton("🏠 Asosiy menyu", callback_data="back_main")]
-                ])
-            )
+                ]))
         else:
             await update.message.reply_text(f"⚠️ <b>{username}</b> allaqachon mavjud!", parse_mode="HTML",
                 reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("🔙 Orqaga", callback_data="menu_channels")]]))
         context.user_data["state"] = None
-
     elif state == "waiting_movie_info":
         text = update.message.text.strip()
         parts = text.split("|")
@@ -365,14 +344,12 @@ async def handle_admin_input(update: Update, context: ContextTypes.DEFAULT_TYPE)
                 reply_markup=InlineKeyboardMarkup([
                     [InlineKeyboardButton("➕ Yana kino qo'shish", callback_data="mv_add")],
                     [InlineKeyboardButton("🏠 Asosiy menyu", callback_data="back_main")]
-                ])
-            )
+                ]))
         else:
             await update.message.reply_text(f"⚠️ <b>{code}</b> kodi allaqachon mavjud!", parse_mode="HTML",
                 reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("🔙 Orqaga", callback_data="menu_movies")]]))
         context.user_data["state"] = None
         context.user_data["pending_file_id"] = None
-
     elif state == "waiting_broadcast":
         message_text = update.message.text.strip()
         users = db.get_all_users()
@@ -390,7 +367,6 @@ async def handle_admin_input(update: Update, context: ContextTypes.DEFAULT_TYPE)
             parse_mode="HTML",
             reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("🏠 Asosiy menyu", callback_data="back_main")]]))
         context.user_data["state"] = None
-
     else:
         await handle_user_message(update, context)
 
@@ -408,10 +384,10 @@ async def handle_video(update: Update, context: ContextTypes.DEFAULT_TYPE):
     context.user_data["pending_file_id"] = file_id
     context.user_data["state"] = "waiting_movie_info"
     await update.message.reply_text(
-        f"✅ <b>Video qabul qilindi!</b>\n\n"
-        f"Endi shu formatda yuboring:\n\n"
-        f"<code>KOD|Kino nomi|Tavsif</code>\n\n"
-        f"<b>Misol:</b>\n<code>AV2023|Avatar: Suv yo'li|O'zbekcha dublyaj, HD</code>",
+        "✅ <b>Video qabul qilindi!</b>\n\n"
+        "Endi shu formatda yuboring:\n\n"
+        "<code>KOD|Kino nomi|Tavsif</code>\n\n"
+        "<b>Misol:</b>\n<code>AV2023|Avatar: Suv yo'li|O'zbekcha dublyaj, HD</code>",
         parse_mode="HTML"
     )
 
@@ -420,8 +396,8 @@ async def handle_video(update: Update, context: ContextTypes.DEFAULT_TYPE):
 #  MAIN
 # ═══════════════════════════════════════
 
-def main():
-    keep_alive()  # Render uchun web server ishga tushadi
+async def main():
+    keep_alive()
 
     app = Application.builder().token(TOKEN).build()
     app.add_handler(CommandHandler("start", start))
@@ -432,8 +408,8 @@ def main():
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_admin_input))
 
     logger.info("Bot ishga tushdi!")
-    app.run_polling(allowed_updates=Update.ALL_TYPES)
+    await app.run_polling(allowed_updates=Update.ALL_TYPES)
 
 
 if __name__ == "__main__":
-    main()
+    asyncio.run(main())
