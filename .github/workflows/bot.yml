@@ -15,6 +15,8 @@ jobs:
     steps:
       - name: Kodni yuklab olish
         uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GH_TOKEN }}
 
       - name: Python 3.11 o'rnatish
         uses: actions/setup-python@v5
@@ -30,8 +32,10 @@ jobs:
         run: |
           if [ -n "$DATA_JSON" ]; then
             echo "$DATA_JSON" > data.json
+            echo "data.json tiklandi"
           else
             echo '{"channels":[],"movies":{},"users":[]}' > data.json
+            echo "Yangi data.json yaratildi"
           fi
 
       - name: Botni ishga tushirish
@@ -39,3 +43,16 @@ jobs:
           BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
           ADMIN_IDS: ${{ secrets.ADMIN_IDS }}
         run: python bot.py
+
+      - name: data.json ni saqlash
+        if: always()
+        env:
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+          DATA_JSON_NEW: ${{ env.DATA_JSON_NEW }}
+        run: |
+          if [ -f data.json ]; then
+            DATA=$(cat data.json)
+            echo "DATA_JSON_NEW=$DATA" >> $GITHUB_ENV
+            gh secret set DATA_JSON --body "$DATA" --repo ${{ github.repository }}
+            echo "data.json saqlandi"
+          fi
