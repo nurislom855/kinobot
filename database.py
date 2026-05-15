@@ -1,30 +1,23 @@
 import json
 import os
-from typing import Optional
 
 DATA_FILE = "data.json"
 
-
-def _load() -> dict:
+def _load():
     if not os.path.exists(DATA_FILE):
-        return {"channels": [], "movies": {}, "users": []}
+        _save({"channels": [], "movies": {}, "users": []})
     with open(DATA_FILE, "r", encoding="utf-8") as f:
         return json.load(f)
 
-
-def _save(data: dict):
+def _save(data):
     with open(DATA_FILE, "w", encoding="utf-8") as f:
         json.dump(data, f, ensure_ascii=False, indent=2)
 
-
 class Database:
-
-    # ─── KANALLAR ───
-
-    def get_channels(self) -> list:
+    def get_channels(self):
         return _load().get("channels", [])
 
-    def add_channel(self, username: str, name: str) -> bool:
+    def add_channel(self, username, name):
         data = _load()
         for ch in data["channels"]:
             if ch["username"] == username:
@@ -33,30 +26,21 @@ class Database:
         _save(data)
         return True
 
-    def remove_channel(self, username: str) -> bool:
+    def remove_channel(self, username):
         data = _load()
-        before = len(data["channels"])
         data["channels"] = [c for c in data["channels"] if c["username"] != username]
-        if len(data["channels"]) < before:
-            _save(data)
-            return True
-        return False
+        _save(data)
+        return True
 
-    # ─── KINOLAR ───
+    def get_all_movies(self):
+        return list(_load().get("movies", {}).values())
 
-    def get_all_movies(self) -> list:
-        movies = _load().get("movies", {})
-        return list(movies.values())
+    def get_movie_by_code(self, code):
+        return _load().get("movies", {}).get(code.upper())
 
-    def get_movie_by_code(self, code: str) -> Optional[dict]:
-        movies = _load().get("movies", {})
-        return movies.get(code.upper())
-
-    def add_movie(self, code: str, name: str, description: str, file_id: str) -> bool:
+    def add_movie(self, code, name, description, file_id):
         data = _load()
         code = code.upper()
-        if code in data["movies"]:
-            return False
         data["movies"][code] = {
             "code": code,
             "name": name,
@@ -66,7 +50,7 @@ class Database:
         _save(data)
         return True
 
-    def remove_movie(self, code: str) -> bool:
+    def remove_movie(self, code):
         data = _load()
         code = code.upper()
         if code in data["movies"]:
@@ -75,26 +59,21 @@ class Database:
             return True
         return False
 
-    # ─── FOYDALANUVCHILAR ───
-
-    def add_user(self, user_id: int):
+    def add_user(self, user_id):
         data = _load()
         if user_id not in data["users"]:
             data["users"].append(user_id)
             _save(data)
 
-    def get_all_users(self) -> list:
+    def get_all_users(self):
         return _load().get("users", [])
 
-    # ─── STATISTIKA ───
-
-    def get_stats(self) -> dict:
+    def get_stats(self):
         data = _load()
         return {
             "users": len(data.get("users", [])),
             "movies": len(data.get("movies", {})),
             "channels": len(data.get("channels", []))
         }
-
 
 db = Database()
