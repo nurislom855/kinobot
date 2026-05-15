@@ -13,9 +13,8 @@ _admin_env = os.environ.get("ADMIN_IDS", "")
 if _admin_env:
     ADMIN_IDS = [int(x.strip()) for x in _admin_env.split(",") if x.strip().isdigit()]
 else:
-    # Lokal ishlatish uchun — shu yerga o'z ID ingizni yozing
     ADMIN_IDS = [
-        123456789,  # <-- o'z Telegram ID ingizni kiriting
+        7406325328,
     ]
 
 # Xush kelibsiz xabar
