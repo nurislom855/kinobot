@@ -16,7 +16,7 @@ jobs:
       - name: Kodni yuklab olish
         uses: actions/checkout@v4
 
-      - name: Python o'rnatish
+      - name: Python 3.11 o'rnatish
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
@@ -30,10 +30,8 @@ jobs:
         run: |
           if [ -n "$DATA_JSON" ]; then
             echo "$DATA_JSON" > data.json
-            echo "data.json tiklandi"
           else
             echo '{"channels":[],"movies":{},"users":[]}' > data.json
-            echo "Yangi data.json yaratildi"
           fi
 
       - name: Botni ishga tushirish
